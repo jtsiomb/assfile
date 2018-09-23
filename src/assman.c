@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "assman_impl.h"
 
 static int add_fop(const char *prefix, int type, struct ass_fileops *fop);
@@ -108,11 +109,12 @@ ass_file *ass_fopen(const char *fname, const char *mode)
 	void *mfile;
 	ass_file *file;
 	FILE *fp;
+	const char *after_prefix;
 
 	m = mlist;
 	while(m) {
-		if(match_prefix(fname, m->prefix)) {
-			if((mfile = m->fop->open(fname, m->fop->udata))) {
+		if((after_prefix = match_prefix(fname, m->prefix))) {
+			if((mfile = m->fop->open(after_prefix, m->fop->udata))) {
 				if(!(file = malloc(sizeof *file))) {
 					perror("assman: ass_fopen failed to allocate file structure");
 					m->fop->close(mfile, m->fop->udata);
@@ -139,6 +141,7 @@ ass_file *ass_fopen(const char *fname, const char *mode)
 	/* nothing matched, or failed to open, try the filesystem */
 	if((fp = fopen(fname, mode))) {
 		if(!(file = malloc(sizeof *file))) {
+			ass_errno = errno;
 			perror("assman: ass_fopen failed to allocate file structure");
 			fclose(fp);
 			return 0;
@@ -153,6 +156,7 @@ ass_file *ass_fopen(const char *fname, const char *mode)
 		}
 		return file;
 	}
+	ass_errno = errno;
 	return 0;
 }
 

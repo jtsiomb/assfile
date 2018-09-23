@@ -66,5 +66,13 @@ static long fop_read(void *fp, void *buf, long size, void *udata)
 }
 
 #else
-int ass_mod_url_disabled;
+struct ass_fileops *ass_alloc_url(const char *url)
+{
+	fprintf(stderr, "assman: compiled without URL asset source support\n");
+	return 0;
+}
+
+void ass_free_url(struct ass_fileops *fop)
+{
+}
 #endif

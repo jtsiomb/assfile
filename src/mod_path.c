@@ -53,12 +53,12 @@ void ass_free_path(struct ass_fileops *fop)
 
 static void *fop_open(const char *fname, void *udata)
 {
-	const char *prefix = (char*)udata;
+	const char *asspath = (char*)udata;
 	char *path;
 	FILE *fp;
 
-	path = alloca(strlen(prefix) + strlen(fname) + 2);
-	sprintf(path, "%s/%s", path, fname);
+	path = alloca(strlen(asspath) + strlen(fname) + 2);
+	sprintf(path, "%s/%s", asspath, fname);
 
 	if(!(fp = fopen(path, "rb"))) {
 		ass_errno = errno;
