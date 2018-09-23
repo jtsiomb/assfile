@@ -1,4 +1,14 @@
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+
+#ifdef __MSVCRT__
+#include <malloc.h>
+#else
+#include <alloca.h>
+#endif
 
 #include "assman_impl.h"
 
@@ -26,7 +36,7 @@ struct ass_fileops *ass_alloc_path(const char *path)
 	while(*path) {
 		*p++ = *path++;
 	}
-	while(p > fop->udata && (p[-1] == '/' || isspace(p[-1]))) p--;
+	while(p > (char*)fop->udata && (p[-1] == '/' || isspace(p[-1]))) p--;
 	*p = 0;
 
 	fop->open = fop_open;
@@ -36,10 +46,39 @@ struct ass_fileops *ass_alloc_path(const char *path)
 	return fop;
 }
 
-static void *fop_open(const char *fname, void *udata)
+void ass_free_path(struct ass_fileops *fop)
 {
+	free(fop->udata);
 }
 
-static void fop_close(void *fp, void *udata);
-static long fop_seek(void *fp, long offs, int whence, void *udata);
-static long fop_read(void *fp, void *buf, long size, void *udata);
+static void *fop_open(const char *fname, void *udata)
+{
+	const char *prefix = (char*)udata;
+	char *path;
+	FILE *fp;
+
+	path = alloca(strlen(prefix) + strlen(fname) + 2);
+	sprintf(path, "%s/%s", path, fname);
+
+	if(!(fp = fopen(path, "rb"))) {
+		ass_errno = errno;
+		return 0;
+	}
+	return fp;
+}
+
+static void fop_close(void *fp, void *udata)
+{
+	fclose(fp);
+}
+
+static long fop_seek(void *fp, long offs, int whence, void *udata)
+{
+	fseek(fp, offs, whence);
+	return ftell(fp);
+}
+
+static long fop_read(void *fp, void *buf, long size, void *udata)
+{
+	return fread(buf, 1, size, fp);
+}

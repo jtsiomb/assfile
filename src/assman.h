@@ -24,6 +24,8 @@ enum {
 extern "C" {
 #endif
 
+int ass_errno;
+
 void ass_set_option(int opt, int val);
 int ass_get_option(int opt);
 
