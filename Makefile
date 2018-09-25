@@ -3,17 +3,36 @@ obj = $(src:.c=.o)
 dep = $(obj:.o=.d)
 
 name = assman
+so_major = 0
+so_minor = 1
+
 lib_a = lib$(name).a
+lib_so = lib$(name).so.$(so_major).$(so_minor)
+soname = lib$(name).so.$(so_major)
+devlink = lib$(name).so
+shared = -shared -Wl,-soname,$(soname)
 
 warn = -pedantic -Wall
 dbg = -g
 opt = -O0
 
 CFLAGS = $(warn) $(dbg) $(opt) $(inc)
-LDFLAGS =
+LDFLAGS = -lcurl
+
+.PHONY: all
+all: $(lib_so) $(lib_a) $(soname) $(devlink)
+
+$(lib_so): $(obj)
+	$(CC) -o $@ $(shared) $(obj) $(LDFLAGS)
 
 $(lib_a): $(obj)
 	$(AR) rcs $@ $(obj)
+
+$(soname): $(lib_so)
+	rm -f $@ && ln -s $< $@
+
+$(devlink): $(soname)
+	rm -f $@ && ln -s $< $@
 
 %.d: %.c
 	@echo "generating depfile $< -> $@"
@@ -21,7 +40,7 @@ $(lib_a): $(obj)
 
 .PHONY: clean
 clean:
-	rm -f $(obj) $(bin)
+	rm -f $(obj) $(lib_a) $(lib_so) $(soname) $(devlink)
 
 .PHONY: cleandep
 cleandep:

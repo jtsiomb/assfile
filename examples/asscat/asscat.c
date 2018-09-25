@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
 void print_usage(const char *argv0)
 {
-	printf("Usage: %s [options] <file 1> <file 2> ... <file n>\n");
+	printf("Usage: %s [options] <file 1> <file 2> ... <file n>\n", argv0);
 	printf("Options:\n");
 	printf(" -prefix <prefix>   sets the path prefix to match for subsequent asset sources\n");
 	printf(" -path <path>       filesystem asset source\n");

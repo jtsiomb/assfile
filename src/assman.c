@@ -6,8 +6,6 @@
 
 static int add_fop(const char *prefix, int type, struct ass_fileops *fop);
 static const char *match_prefix(const char *str, const char *prefix);
-static int add_file(ass_file *file);
-static int remove_file(ass_file *file);
 
 #define DEF_FLAGS	(1 << ASS_OPEN_FALLTHROUGH)
 
@@ -122,12 +120,6 @@ ass_file *ass_fopen(const char *fname, const char *mode)
 				}
 				file->file = mfile;
 				file->fop = m->fop;
-
-				if(add_file(file) == -1) {
-					m->fop->close(mfile, m->fop->udata);
-					free(file);
-					return 0;
-				}
 				return file;
 			} else {
 				if(!(assflags & (1 << ASS_OPEN_FALLTHROUGH))) {
@@ -148,12 +140,6 @@ ass_file *ass_fopen(const char *fname, const char *mode)
 		}
 		file->file = fp;
 		file->fop = 0;
-
-		if(add_file(file) == -1) {
-			fclose(fp);
-			free(file);
-			return 0;
-		}
 		return file;
 	}
 	ass_errno = errno;
@@ -179,7 +165,6 @@ void ass_fclose(ass_file *fp)
 	} else {
 		fclose(fp->file);
 	}
-	remove_file(fp);
 	free(fp);
 }
 
@@ -241,15 +226,4 @@ char *ass_fgets(char *s, int size, ass_file *fp)
 	}
 	*ptr = 0;
 	return ptr == s ? 0 : s;
-}
-
-
-static int add_file(ass_file *file)
-{
-	return -1;	/* TODO */
-}
-
-static int remove_file(ass_file *file)
-{
-	return -1;	/* TODO */
 }
