@@ -15,9 +15,11 @@ shared = -shared -Wl,-soname,$(soname)
 warn = -pedantic -Wall
 dbg = -g
 opt = -O0
+def = -DBUILD_MOD_URL
+pic = -fPIC
 
-CFLAGS = $(warn) $(dbg) $(opt) $(inc)
-LDFLAGS = -lcurl
+CFLAGS = $(warn) $(dbg) $(opt) $(pic) $(def) $(inc) -pthread
+LDFLAGS = -pthread -lpthread -lcurl
 
 .PHONY: all
 all: $(lib_so) $(lib_a) $(soname) $(devlink)
