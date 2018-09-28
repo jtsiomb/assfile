@@ -9,6 +9,7 @@
 #ifdef BUILD_MOD_URL
 #include <pthread.h>
 #include <curl/curl.h>
+#include <sys/stat.h>
 
 enum {
 	DL_UNKNOWN,
@@ -38,6 +39,7 @@ static void exit_cleanup(void);
 static void download(void *data);
 static size_t recv_callback(char *ptr, size_t size, size_t nmemb, void *udata);
 static const char *get_temp_dir(void);
+static int mkdir_path(const char *path);
 
 static char *tmpdir, *cachedir;
 static struct thread_pool *tpool;
@@ -59,10 +61,15 @@ struct ass_fileops *ass_alloc_url(const char *url)
 		}
 		tmpdir = (char*)get_temp_dir();
 		if(!(cachedir = malloc(strlen(ass_mod_url_cachedir) + strlen(tmpdir) + 2))) {
-			fprintf(stderr, "assman: failed to allocate cachedir path buffer\n");
+			fprintf(stderr, "assman mod_url: failed to allocate cachedir path buffer\n");
 			goto init_failed;
 		}
 		sprintf(cachedir, "%s/%s", tmpdir, ass_mod_url_cachedir);
+
+		if(mkdir_path(cachedir) == -1) {
+			fprintf(stderr, "assman mod_url: failed to create cache directory: %s\n", cachedir);
+			goto init_failed;
+		}
 
 		if(ass_mod_url_max_threads <= 0) {
 			ass_mod_url_max_threads = 8;
@@ -143,19 +150,15 @@ void ass_free_url(struct ass_fileops *fop)
 {
 }
 
-static char *cache_filename(const char *fname, const char *url_prefix)
+static char *cache_filename(const char *fname, const char *url)
 {
 	MD4_CTX md4ctx;
 	unsigned char sum[16];
 	char sumstr[33];
 	char *resfname;
-	int i;
+	int i, prefix_len;
+	int url_len = strlen(url);
 	int fname_len = strlen(fname);
-	int prefix_len = strlen(url_prefix);
-	int url_len = fname_len + prefix_len + 1;
-
-	char *url = alloca(url_len + 1);
-	sprintf(url, "%s/%s", url_prefix, fname);
 
 	MD4Init(&md4ctx);
 	MD4Update(&md4ctx, (unsigned char*)url, url_len);
@@ -189,7 +192,21 @@ static void *fop_open(const char *fname, void *udata)
 		ass_errno = ENOMEM;
 		return 0;
 	}
-	if(!(file->cache_fname = cache_filename(fname, udata))) {
+
+	if(!(file->url = malloc(strlen(prefix) + strlen(fname) + 2))) {
+		perror("assman: mod_url: failed to allocate url buffer");
+		ass_errno = errno;
+		free(file);
+		return 0;
+	}
+	if(prefix && *prefix) {
+		sprintf(file->url, "%s/%s", prefix, fname);
+	} else {
+		strcpy(file->url, fname);
+	}
+
+	if(!(file->cache_fname = cache_filename(fname, file->url))) {
+		free(file->url);
 		free(file);
 		ass_errno = ENOMEM;
 		return 0;
@@ -199,24 +216,10 @@ static void *fop_open(const char *fname, void *udata)
 		fprintf(stderr, "assman: mod_url: failed to open cache file (%s) for writing: %s\n",
 				file->cache_fname, strerror(errno));
 		ass_errno = errno;
+		free(file->url);
 		free(file->cache_fname);
 		free(file);
 		return 0;
-	}
-
-	if(!(file->url = malloc(strlen(prefix) + strlen(fname) + 2))) {
-		perror("assman: mod_url: failed to allocate url buffer");
-		ass_errno = errno;
-		fclose(file->cache_file);
-		remove(file->cache_fname);
-		free(file->cache_fname);
-		free(file);
-		return 0;
-	}
-	if(prefix && *prefix) {
-		sprintf(file->url, "%s/%s", prefix, fname);
-	} else {
-		strcpy(file->url, fname);
 	}
 
 	file->state = DL_UNKNOWN;
@@ -238,6 +241,7 @@ static void *fop_open(const char *fname, void *udata)
 		fclose(file->cache_file);
 		remove(file->cache_fname);
 		free(file->cache_fname);
+		free(file->url);
 		pthread_cond_destroy(&file->state_cond);
 		pthread_mutex_destroy(&file->state_mutex);
 		free(file);
@@ -265,6 +269,7 @@ static void fop_close(void *fp, void *udata)
 	fclose(file->cache_file);
 	if(file->state == DL_ERROR) remove(file->cache_fname);
 	free(file->cache_fname);
+	free(file->url);
 	pthread_cond_destroy(&file->state_cond);
 	pthread_mutex_destroy(&file->state_mutex);
 	free(file);
@@ -350,6 +355,34 @@ static const char *get_temp_dir(void)
 #endif
 
 
+static int mkdir_path(const char *path)
+{
+	char *pathbuf, *dptr;
+	struct stat st;
+
+	if(!path || !*path) return -1;
+
+	pathbuf = dptr = alloca(strlen(path) + 1);
+
+	while(*path) {
+		while(*path) {
+			int c = *path++;
+			*dptr++ = c;
+
+			if(c == '/' || c == '\\') break;
+		}
+		*dptr = 0;
+
+		if(stat(pathbuf, &st) == -1) {
+			/* path component does not exist, create it */
+			if(mkdir(pathbuf, 0777) == -1) {
+				return -1;
+			}
+		}
+	}
+
+	return 0;
+}
 
 #else	/* don't build mod_url */
 struct ass_fileops *ass_alloc_url(const char *url)
