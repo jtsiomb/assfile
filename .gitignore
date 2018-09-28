@@ -3,4 +3,5 @@
 *.swp
 *.a
 *.so*
+Makefile
 examples/asscat/asscat

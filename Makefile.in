@@ -1,0 +1,84 @@
+src = $(wildcard src/*.c)
+obj = $(src:.c=.o)
+dep = $(obj:.o=.d)
+
+name = assman
+so_major = 0
+so_minor = 1
+
+lib_a = lib$(name).a
+sodir = lib
+
+sys := $(shell uname -s | sed 's/MINGW.*/mingw/')
+ifeq ($(sys), Darwin)
+	lib_so = lib$(name).dylib
+	sharedopt = -dynamiclib
+
+else ifeq ($(sys), mingw)
+	lib_so = lib$(name).dll
+	sharedopt = -shared
+	sodir = bin
+
+else
+	ldname = lib$(name).so
+	soname = lib$(name).so.$(so_major)
+	lib_so = lib$(name).so.$(so_major).$(so_minor)
+	sharedopt = -shared -Wl,-soname,$(soname)
+endif
+
+
+warn = -pedantic -Wall
+pic = -fPIC
+
+CFLAGS = $(warn) $(dbg) $(opt) $(pic) $(inc) $(mod_url_cflags)
+LDFLAGS = $(mod_url_libs)
+
+.PHONY: all
+all: $(lib_so) $(lib_a) $(soname) $(ldname)
+
+$(lib_so): $(obj)
+	$(CC) -o $@ $(sharedopt) $(obj) $(LDFLAGS)
+
+$(lib_a): $(obj)
+	$(AR) rcs $@ $(obj)
+
+$(soname): $(lib_so)
+	rm -f $@ && ln -s $< $@
+
+$(ldname): $(soname)
+	rm -f $@ && ln -s $< $@
+
+-include $(dep)
+
+%.d: %.c
+	@echo "generating depfile $< -> $@"
+	@$(CPP) $(CFLAGS) $< -MM -MT $(@:.d=.o) >$@
+
+.PHONY: clean
+clean:
+	rm -f $(obj) $(lib_a) $(lib_so) $(soname) $(ldname)
+
+.PHONY: cleandep
+cleandep:
+	rm -f $(dep)
+
+.PHONY: install
+install: $(lib_a) $(lib_so)
+	mkdir -p $(DESTDIR)$(PREFIX)/bin $(DESTDIR)$(PREFIX)/lib $(DESTDIR)$(PREFIX)/include
+	cp $(lib_a) $(DESTDIR)$(PREFIX)/lib/$(lib_a)
+	cp $(lib_so) $(DESTDIR)$(PREFIX)/$(sodir)/$(lib_so)
+	cp src/assman.h $(DESTDIR)$(PREFIX)/include/assman.h
+	[ -n "$(ldname)" ] && \
+		rm -f $(DESTDIR)$(PREFIX)/$(sodir)/$(ldname) $(DESTDIR)$(PREFIX)/$(sodir)/$(soname) && \
+		cd $(DESTDIR)$(PREFIX)/lib && ln -s $(lib_so) $(ldname) && ln -s $(lib_so) $(soname) || true
+
+
+.PHONY: uninstall
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/include/assman.h
+	rm -f $(DESTDIR)$(PREFIX)/lib/$(lib_a)
+	rm -f $(DESTDIR)$(PREFIX)/$(sodir)/$(lib_so)
+	[ -n "$(ldname)" ] && \
+		rm -f $(DESTDIR)$(PREFIX)/$(sodir)/$(ldname) && \
+		rm -f $(DESTDIR)$(PREFIX)/$(sodir)/$(soname) || true
+
