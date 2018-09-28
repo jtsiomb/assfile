@@ -18,8 +18,8 @@ opt = -O0
 def = -DBUILD_MOD_URL
 pic = -fPIC
 
-CFLAGS = $(warn) $(dbg) $(opt) $(pic) $(def) $(inc) -pthread
-LDFLAGS = -pthread -lpthread -lcurl
+CFLAGS = $(warn) $(dbg) $(opt) $(pic) $(def) $(inc)
+LDFLAGS = -lpthread -lcurl
 
 .PHONY: all
 all: $(lib_so) $(lib_a) $(soname) $(devlink)

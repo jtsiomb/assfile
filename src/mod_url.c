@@ -47,7 +47,8 @@ struct ass_fileops *ass_alloc_url(const char *url)
 {
 	static int done_init;
 	struct ass_fileops *fop;
-	int i;
+	int i, len;
+	char *ptr;
 
 	if(!done_init) {
 		curl_global_init(CURL_GLOBAL_ALL);
@@ -89,11 +90,16 @@ struct ass_fileops *ass_alloc_url(const char *url)
 	if(!(fop = malloc(sizeof *fop))) {
 		return 0;
 	}
-	if(!(fop->udata = malloc(strlen(url) + 1))) {
+	len = strlen(url);
+	if(!(fop->udata = malloc(len + 1))) {
 		free(fop);
 		return 0;
 	}
-	strcpy(fop->udata, url);
+	memcpy(fop->udata, url, len + 1);
+	if(len) {
+		ptr = (char*)fop->udata + len - 1;
+		while(*ptr == '/') *ptr-- = 0;
+	}
 
 	fop->open = fop_open;
 	fop->close = fop_close;
@@ -161,7 +167,7 @@ static char *cache_filename(const char *fname, const char *url_prefix)
 	sumstr[32] = 0;
 
 	prefix_len = strlen(cachedir);
-	if(!(resfname = malloc(prefix_len + fname_len + 20))) {
+	if(!(resfname = malloc(prefix_len + fname_len + 64))) {
 		return 0;
 	}
 	sprintf(resfname, "%s/%s-%s", cachedir, fname, sumstr);
@@ -172,6 +178,12 @@ static void *fop_open(const char *fname, void *udata)
 {
 	struct file_info *file;
 	int state;
+	char *prefix = udata;
+
+	if(!fname || !*fname) {
+		ass_errno = ENOENT;
+		return 0;
+	}
 
 	if(!(file = malloc(sizeof *file))) {
 		ass_errno = ENOMEM;
@@ -182,6 +194,7 @@ static void *fop_open(const char *fname, void *udata)
 		ass_errno = ENOMEM;
 		return 0;
 	}
+	printf("assman: mod_url cache file: %s\n", file->cache_fname);
 	if(!(file->cache_file = fopen(file->cache_fname, "wb"))) {
 		fprintf(stderr, "assman: mod_url: failed to open cache file (%s) for writing: %s\n",
 				file->cache_fname, strerror(errno));
@@ -189,6 +202,21 @@ static void *fop_open(const char *fname, void *udata)
 		free(file->cache_fname);
 		free(file);
 		return 0;
+	}
+
+	if(!(file->url = malloc(strlen(prefix) + strlen(fname) + 2))) {
+		perror("assman: mod_url: failed to allocate url buffer");
+		ass_errno = errno;
+		fclose(file->cache_file);
+		remove(file->cache_fname);
+		free(file->cache_fname);
+		free(file);
+		return 0;
+	}
+	if(prefix && *prefix) {
+		sprintf(file->url, "%s/%s", prefix, fname);
+	} else {
+		strcpy(file->url, fname);
 	}
 
 	file->state = DL_UNKNOWN;
