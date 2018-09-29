@@ -376,7 +376,7 @@ static int mkdir_path(const char *path)
 
 		if(stat(pathbuf, &st) == -1) {
 			/* path component does not exist, create it */
-			if(mkdir(pathbuf, 0777) == -1) {
+			if(mkdir(pathbuf) == -1) {
 				return -1;
 			}
 		}
