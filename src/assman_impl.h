@@ -36,5 +36,6 @@ void ass_free_url(struct ass_fileops *fop);
 int ass_mod_url_max_threads;
 char ass_mod_url_cachedir[512];
 
+int ass_verbose;
 
 #endif	/* ASSMAN_IMPL_H_ */

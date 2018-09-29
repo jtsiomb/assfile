@@ -158,22 +158,21 @@ static char *cache_filename(const char *fname, const char *url)
 	char *resfname;
 	int i, prefix_len;
 	int url_len = strlen(url);
-	int fname_len = strlen(fname);
 
 	MD4Init(&md4ctx);
 	MD4Update(&md4ctx, (unsigned char*)url, url_len);
 	MD4Final((unsigned char*)sum, &md4ctx);
 
 	for(i=0; i<16; i++) {
-		sprintf(sumstr + i * 2, "%x", (unsigned int)sum[i]);
+		sprintf(sumstr + i * 2, "%02x", (unsigned int)sum[i]);
 	}
 	sumstr[32] = 0;
 
 	prefix_len = strlen(cachedir);
-	if(!(resfname = malloc(prefix_len + fname_len + 64))) {
+	if(!(resfname = malloc(prefix_len + 64))) {
 		return 0;
 	}
-	sprintf(resfname, "%s/%s-%s", cachedir, fname, sumstr);
+	sprintf(resfname, "%s/%s", cachedir, sumstr);
 	return resfname;
 }
 
@@ -211,7 +210,6 @@ static void *fop_open(const char *fname, void *udata)
 		ass_errno = ENOMEM;
 		return 0;
 	}
-	printf("assman: mod_url cache file: %s\n", file->cache_fname);
 	if(!(file->cache_file = fopen(file->cache_fname, "wb"))) {
 		fprintf(stderr, "assman: mod_url: failed to open cache file (%s) for writing: %s\n",
 				file->cache_fname, strerror(errno));
@@ -226,6 +224,9 @@ static void *fop_open(const char *fname, void *udata)
 	pthread_mutex_init(&file->state_mutex, 0);
 	pthread_cond_init(&file->state_cond, 0);
 
+	if(ass_verbose) {
+		fprintf(stderr, "assman: mod_url: get \"%s\" -> \"%s\"\n", file->url, file->cache_fname);
+	}
 	ass_tpool_enqueue(tpool, file, download, 0);
 
 	/* wait until the file changes state */

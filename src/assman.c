@@ -4,8 +4,11 @@
 #include <errno.h>
 #include "assman_impl.h"
 
+int ass_errno;
+
 static int add_fop(const char *prefix, int type, struct ass_fileops *fop);
 static const char *match_prefix(const char *str, const char *prefix);
+static void upd_verbose_flag(void);
 
 #define DEF_FLAGS	(1 << ASS_OPEN_FALLTHROUGH)
 
@@ -49,6 +52,8 @@ int ass_add_user(const char *prefix, struct ass_fileops *fop)
 static int add_fop(const char *prefix, int type, struct ass_fileops *fop)
 {
 	struct mount *m;
+
+	upd_verbose_flag();
 
 	if(!fop) {
 		fprintf(stderr, "assman: failed to allocate asset source\n");
@@ -109,9 +114,14 @@ ass_file *ass_fopen(const char *fname, const char *mode)
 	FILE *fp;
 	const char *after_prefix;
 
+	upd_verbose_flag();
+
 	m = mlist;
 	while(m) {
 		if((after_prefix = match_prefix(fname, m->prefix))) {
+			while(*after_prefix && (*after_prefix == '/' || *after_prefix == '\\')) {
+				after_prefix++;
+			}
 			if((mfile = m->fop->open(after_prefix, m->fop->udata))) {
 				if(!(file = malloc(sizeof *file))) {
 					perror("assman: ass_fopen failed to allocate file structure");
@@ -226,4 +236,14 @@ char *ass_fgets(char *s, int size, ass_file *fp)
 	}
 	*ptr = 0;
 	return ptr == s ? 0 : s;
+}
+
+
+static void upd_verbose_flag(void)
+{
+	const char *env;
+
+	if((env = getenv("ASSMAN_VERBOSE"))) {
+		ass_verbose = atoi(env);
+	}
 }
