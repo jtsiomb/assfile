@@ -59,4 +59,11 @@ void print_usage(const char *argv0)
 	printf(" -archive <archive> archive asset source\n");
 	printf(" -url <url>         url asset source\n");
 	printf(" -h,-help           print usage and exit\n");
+	printf("\nExamples:\n");
+	printf("\n Print the contents of sdr.glsl installed under /usr/share/foo/shaders:\n");
+	printf("  %s -prefix shaders -path /usr/share/foo shaders/sdr.glsl\n", argv0);
+	printf("\n Display the image img/foo.jpg from within a tar file:\n");
+	printf("  %s -prefix data -archive data.tar data/img/foo.jpg | display -\n", argv0);
+	printf("\n Print the contents of lgpl.txt from http://www.gnu.org/licenses/\n");
+	printf("  %s -prefix gnu -url http://www.gnu.org/licenses/ gnu/lgpl.txt\n", argv0);
 }
