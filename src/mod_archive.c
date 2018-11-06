@@ -1,8 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "assman_impl.h"
 #include "tar.h"
+
+struct file_info {
+	struct tar_entry *tarent;
+	long roffs;
+	int eof;
+};
 
 static void *fop_open(const char *fname, void *udata);
 static void fop_close(void *fp, void *udata);
@@ -36,23 +43,98 @@ struct ass_fileops *ass_alloc_archive(const char *fname)
 
 void ass_free_archive(struct ass_fileops *fop)
 {
+	close_tar(fop->udata);
+	free(fop->udata);
+	fop->udata = 0;
 }
 
 static void *fop_open(const char *fname, void *udata)
 {
-	return 0;	/* TODO */
+	int i;
+	struct file_info *file;
+	struct tar *tar = udata;
+
+	for(i=0; i<tar->num_files; i++) {
+		if(strcmp(fname, tar->files[i].path) == 0) {
+			if(!(file = malloc(sizeof *file))) {
+				ass_errno = ENOMEM;
+				return 0;
+			}
+			file->tarent = tar->files + i;
+			file->roffs = 0;
+			file->eof = 0;
+			return file;
+		}
+	}
+
+	ass_errno = ENOENT;
+	return 0;
 }
 
 static void fop_close(void *fp, void *udata)
 {
+	free(fp);
 }
 
 static long fop_seek(void *fp, long offs, int whence, void *udata)
 {
-	return 0;	/* TODO */
+	long newoffs;
+	struct file_info *file = fp;
+
+	switch(whence) {
+	case SEEK_SET:
+		newoffs = offs;
+		break;
+
+	case SEEK_CUR:
+		newoffs = file->roffs + offs;
+		break;
+
+	case SEEK_END:
+		newoffs = file->tarent->size + offs;
+		break;
+
+	default:
+		ass_errno = EINVAL;
+		return -1;
+	}
+
+	if(newoffs < 0) {
+		ass_errno = EINVAL;
+		return -1;
+	}
+
+	file->eof = 0;
+	file->roffs = newoffs;
+	return newoffs;
 }
 
 static long fop_read(void *fp, void *buf, long size, void *udata)
 {
-	return 0;	/* TODO */
+	struct tar *tar = udata;
+	struct file_info *file = fp;
+	long newoffs = file->roffs + size;
+	size_t rdbytes;
+
+	if(file->roffs >= file->tarent->size) {
+		file->eof = 1;
+		return -1;
+	}
+
+	if(newoffs > file->tarent->size) {
+		size = file->tarent->size - file->roffs;
+		newoffs = file->tarent->size;
+	}
+
+	if(fseek(tar->fp, file->tarent->offset + file->roffs, SEEK_SET) == -1) {
+		fprintf(stderr, "assman mod_archive: fop_read failed to seek to %ld (%ld + %ld)\n",
+				file->tarent->offset + file->roffs, file->tarent->offset, file->roffs);
+		return -1;
+	}
+	if((rdbytes = fread(buf, 1, size, tar->fp)) < size) {
+		fprintf(stderr, "assman mod_archive: fop_read unexpected EOF while trying to read %ld bytes\n", size);
+		size = rdbytes;
+	}
+	file->roffs = newoffs;
+	return size;
 }

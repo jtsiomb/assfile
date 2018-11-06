@@ -16,6 +16,6 @@ struct tar {
 };
 
 int load_tar(struct tar *tar, const char *fname);
-void free_tar(struct tar *tar);
+void close_tar(struct tar *tar);
 
 #endif	/* TAR_H_ */

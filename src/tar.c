@@ -99,7 +99,7 @@ int load_tar(struct tar *tar, const char *fname)
 		}
 		tar->num_files++;
 
-		printf(" %s - size %ld @%ld\n", node->file.path, node->file.size, node->file.offset);
+		/*printf(" %s - size %ld @%ld\n", node->file.path, node->file.size, node->file.offset);*/
 
 		offset += blksize;
 	}
@@ -131,4 +131,24 @@ end:
 		}
 	}
 	return res;
+}
+
+
+void close_tar(struct tar *tar)
+{
+	if(!tar) return;
+
+	if(tar->fp) {
+		fclose(tar->fp);
+		tar->fp = 0;
+	}
+	if(tar->files && tar->num_files > 0) {
+		int i;
+		for(i=0; i<tar->num_files; i++) {
+			free(tar->files[i].path);
+		}
+		free(tar->files);
+		tar->files = 0;
+		tar->num_files = 0;
+	}
 }
