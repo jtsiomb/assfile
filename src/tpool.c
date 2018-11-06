@@ -147,14 +147,8 @@ void ass_tpool_destroy(struct thread_pool *tpool)
 	pthread_cond_broadcast(&tpool->workq_condvar);
 
 	if(tpool->threads) {
-		/*printf("thread_pool: waiting for %d worker threads to stop ", tpool->num_threads);
-		fflush(stdout);
-		*/
-
 		for(i=0; i<tpool->num_threads; i++) {
 			pthread_join(tpool->threads[i], 0);
-			putchar('.');
-			fflush(stdout);
 		}
 		putchar('\n');
 		free(tpool->threads);
