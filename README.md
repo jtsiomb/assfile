@@ -25,9 +25,6 @@ The access modules provided are:
    `http://mydomain/myapp/data/foo.png` by calling
    `ass_fopen("data/foo.png", "rb")`.
 
-NOTE: `mod_archive` is not implemented yet. Planned support for tar and zip
-archives.
-
 License
 -------
 Copyright (C) 2018 John Tsiombikas <nuclear@member.fsf.org>
