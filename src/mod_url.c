@@ -148,6 +148,7 @@ static void exit_cleanup(void)
 
 void ass_free_url(struct ass_fileops *fop)
 {
+	free(fop->udata);
 }
 
 static char *cache_filename(const char *fname, const char *url)
