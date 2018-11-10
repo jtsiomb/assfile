@@ -2,7 +2,7 @@ src = $(wildcard src/*.c)
 obj = $(src:.c=.o)
 dep = $(obj:.o=.d)
 
-name = assman
+name = assfile
 so_major = 0
 so_minor = 1
 
@@ -67,7 +67,7 @@ install: $(lib_a) $(lib_so)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin $(DESTDIR)$(PREFIX)/lib $(DESTDIR)$(PREFIX)/include
 	cp $(lib_a) $(DESTDIR)$(PREFIX)/lib/$(lib_a)
 	cp $(lib_so) $(DESTDIR)$(PREFIX)/$(sodir)/$(lib_so)
-	cp src/assman.h $(DESTDIR)$(PREFIX)/include/assman.h
+	cp src/assfile.h $(DESTDIR)$(PREFIX)/include/assfile.h
 	[ -n "$(ldname)" ] && \
 		rm -f $(DESTDIR)$(PREFIX)/$(sodir)/$(ldname) $(DESTDIR)$(PREFIX)/$(sodir)/$(soname) && \
 		cd $(DESTDIR)$(PREFIX)/lib && ln -s $(lib_so) $(ldname) && ln -s $(lib_so) $(soname) || true
@@ -75,7 +75,7 @@ install: $(lib_a) $(lib_so)
 
 .PHONY: uninstall
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/include/assman.h
+	rm -f $(DESTDIR)$(PREFIX)/include/assfile.h
 	rm -f $(DESTDIR)$(PREFIX)/lib/$(lib_a)
 	rm -f $(DESTDIR)$(PREFIX)/$(sodir)/$(lib_so)
 	[ -n "$(ldname)" ] && \

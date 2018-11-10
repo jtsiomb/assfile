@@ -1,5 +1,5 @@
 /*
-assman - library for accessing assets with an fopen/fread-like interface
+assfile - library for accessing assets with an fopen/fread-like interface
 Copyright (C) 2018  John Tsiombikas <nuclear@member.fsf.org>
 
 This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "assman_impl.h"
+#include "assfile_impl.h"
 
 int ass_errno;
 
@@ -73,12 +73,12 @@ static int add_fop(const char *prefix, int type, struct ass_fileops *fop)
 	upd_verbose_flag();
 
 	if(!fop) {
-		fprintf(stderr, "assman: failed to allocate asset source\n");
+		fprintf(stderr, "assfile: failed to allocate asset source\n");
 		return -1;
 	}
 
 	if(!(m = malloc(sizeof *m))) {
-		perror("assman: failed to allocate mount node");
+		perror("assfile: failed to allocate mount node");
 		return -1;
 	}
 	if(prefix) {
@@ -141,7 +141,7 @@ ass_file *ass_fopen(const char *fname, const char *mode)
 			}
 			if((mfile = m->fop->open(after_prefix, m->fop->udata))) {
 				if(!(file = malloc(sizeof *file))) {
-					perror("assman: ass_fopen failed to allocate file structure");
+					perror("assfile: ass_fopen failed to allocate file structure");
 					m->fop->close(mfile, m->fop->udata);
 					return 0;
 				}
@@ -161,7 +161,7 @@ ass_file *ass_fopen(const char *fname, const char *mode)
 	if((fp = fopen(fname, mode))) {
 		if(!(file = malloc(sizeof *file))) {
 			ass_errno = errno;
-			perror("assman: ass_fopen failed to allocate file structure");
+			perror("assfile: ass_fopen failed to allocate file structure");
 			fclose(fp);
 			return 0;
 		}
@@ -260,7 +260,7 @@ static void upd_verbose_flag(void)
 {
 	const char *env;
 
-	if((env = getenv("ASSMAN_VERBOSE"))) {
+	if((env = getenv("ASSFILE_VERBOSE"))) {
 		ass_verbose = atoi(env);
 	}
 }

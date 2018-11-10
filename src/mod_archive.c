@@ -1,5 +1,5 @@
 /*
-assman - library for accessing assets with an fopen/fread-like interface
+assfile - library for accessing assets with an fopen/fread-like interface
 Copyright (C) 2018  John Tsiombikas <nuclear@member.fsf.org>
 
 This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "assman_impl.h"
+#include "assfile_impl.h"
 #include "tar.h"
 
 struct file_info {
@@ -144,12 +144,12 @@ static long fop_read(void *fp, void *buf, long size, void *udata)
 	}
 
 	if(fseek(tar->fp, file->tarent->offset + file->roffs, SEEK_SET) == -1) {
-		fprintf(stderr, "assman mod_archive: fop_read failed to seek to %ld (%ld + %ld)\n",
+		fprintf(stderr, "assfile mod_archive: fop_read failed to seek to %ld (%ld + %ld)\n",
 				file->tarent->offset + file->roffs, file->tarent->offset, file->roffs);
 		return -1;
 	}
 	if((rdbytes = fread(buf, 1, size, tar->fp)) < size) {
-		fprintf(stderr, "assman mod_archive: fop_read unexpected EOF while trying to read %ld bytes\n", size);
+		fprintf(stderr, "assfile mod_archive: fop_read unexpected EOF while trying to read %ld bytes\n", size);
 		size = rdbytes;
 	}
 	file->roffs = newoffs;

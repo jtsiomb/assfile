@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "assman.h"
+#include "assfile.h"
 
 void print_usage(const char *argv0);
 

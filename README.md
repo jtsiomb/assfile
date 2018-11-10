@@ -1,4 +1,4 @@
-assman
+assfile
 ======
 
 About
@@ -29,14 +29,14 @@ License
 -------
 Copyright (C) 2018 John Tsiombikas <nuclear@member.fsf.org>
 
-The assman library is free software. Feel free to use, modify, and/or
+The assfile library is free software. Feel free to use, modify, and/or
 redistribute it under the terms of the GNU Lesser General Public License
 version 3, or at your option any later version published by the Free Software
 Foundation. See COPYING and COPYING.LESSER for details.
 
 Build
 -----
-To build and install assman on UNIX, run the usual:
+To build and install assfile on UNIX, run the usual:
 
     ./configure
     make

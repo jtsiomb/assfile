@@ -1,5 +1,5 @@
 /*
-assman - library for accessing assets with an fopen/fread-like interface
+assfile - library for accessing assets with an fopen/fread-like interface
 Copyright (C) 2018  John Tsiombikas <nuclear@member.fsf.org>
 
 This program is free software: you can redistribute it and/or modify
@@ -15,12 +15,12 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-#ifndef ASSMAN_H_
-#define ASSMAN_H_
+#ifndef ASSFILE_H_
+#define ASSFILE_H_
 
 #include <stdlib.h>
 
-#ifndef ASSMAN_IMPL_H_
+#ifndef ASSFILE_IMPL_H_
 typedef void ass_file;
 #endif
 
@@ -69,4 +69,4 @@ char *ass_fgets(char *s, int size, ass_file *fp);
 #endif
 
 
-#endif	/* ASSMAN_H_ */
+#endif	/* ASSFILE_H_ */

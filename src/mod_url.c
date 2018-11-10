@@ -1,5 +1,5 @@
 /*
-assman - library for accessing assets with an fopen/fread-like interface
+assfile - library for accessing assets with an fopen/fread-like interface
 Copyright (C) 2018  John Tsiombikas <nuclear@member.fsf.org>
 
 This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "assman_impl.h"
+#include "assfile_impl.h"
 #include "tpool.h"
 #include "md4.h"
 
@@ -74,17 +74,17 @@ struct ass_fileops *ass_alloc_url(const char *url)
 		atexit(exit_cleanup);
 
 		if(!*ass_mod_url_cachedir) {
-			strcpy(ass_mod_url_cachedir, "assman_cache");
+			strcpy(ass_mod_url_cachedir, "assfile_cache");
 		}
 		tmpdir = (char*)get_temp_dir();
 		if(!(cachedir = malloc(strlen(ass_mod_url_cachedir) + strlen(tmpdir) + 2))) {
-			fprintf(stderr, "assman mod_url: failed to allocate cachedir path buffer\n");
+			fprintf(stderr, "assfile mod_url: failed to allocate cachedir path buffer\n");
 			goto init_failed;
 		}
 		sprintf(cachedir, "%s/%s", tmpdir, ass_mod_url_cachedir);
 
 		if(mkdir_path(cachedir) == -1) {
-			fprintf(stderr, "assman mod_url: failed to create cache directory: %s\n", cachedir);
+			fprintf(stderr, "assfile mod_url: failed to create cache directory: %s\n", cachedir);
 			goto init_failed;
 		}
 
@@ -93,7 +93,7 @@ struct ass_fileops *ass_alloc_url(const char *url)
 		}
 
 		if(!(curl = calloc(ass_mod_url_max_threads, sizeof *curl))) {
-			perror("assman: failed to allocate curl context table");
+			perror("assfile: failed to allocate curl context table");
 			goto init_failed;
 		}
 		for(i=0; i<ass_mod_url_max_threads; i++) {
@@ -104,7 +104,7 @@ struct ass_fileops *ass_alloc_url(const char *url)
 		}
 
 		if(!(tpool = ass_tpool_create(ass_mod_url_max_threads))) {
-			fprintf(stderr, "assman: failed to create thread pool\n");
+			fprintf(stderr, "assfile: failed to create thread pool\n");
 			goto init_failed;
 		}
 
@@ -211,7 +211,7 @@ static void *fop_open(const char *fname, void *udata)
 	}
 
 	if(!(file->url = malloc(strlen(prefix) + strlen(fname) + 2))) {
-		perror("assman: mod_url: failed to allocate url buffer");
+		perror("assfile: mod_url: failed to allocate url buffer");
 		ass_errno = errno;
 		free(file);
 		return 0;
@@ -229,7 +229,7 @@ static void *fop_open(const char *fname, void *udata)
 		return 0;
 	}
 	if(!(file->cache_file = fopen(file->cache_fname, "wb"))) {
-		fprintf(stderr, "assman: mod_url: failed to open cache file (%s) for writing: %s\n",
+		fprintf(stderr, "assfile: mod_url: failed to open cache file (%s) for writing: %s\n",
 				file->cache_fname, strerror(errno));
 		ass_errno = errno;
 		free(file->url);
@@ -243,7 +243,7 @@ static void *fop_open(const char *fname, void *udata)
 	pthread_cond_init(&file->state_cond, 0);
 
 	if(ass_verbose) {
-		fprintf(stderr, "assman: mod_url: get \"%s\" -> \"%s\"\n", file->url, file->cache_fname);
+		fprintf(stderr, "assfile: mod_url: get \"%s\" -> \"%s\"\n", file->url, file->cache_fname);
 	}
 	ass_tpool_enqueue(tpool, file, download, 0);
 
@@ -330,7 +330,7 @@ static void download(void *data)
 		file->state = DL_DONE;
 		fclose(file->cache_file);
 		if(!(file->cache_file = fopen(file->cache_fname, "rb"))) {
-			fprintf(stderr, "assman: failed to reopen cache file (%s) for reading: %s\n",
+			fprintf(stderr, "assfile: failed to reopen cache file (%s) for reading: %s\n",
 					file->cache_fname, strerror(errno));
 			file->state = DL_ERROR;
 		}
@@ -410,7 +410,7 @@ static int mkdir_path(const char *path)
 #else	/* don't build mod_url */
 struct ass_fileops *ass_alloc_url(const char *url)
 {
-	fprintf(stderr, "assman: compiled without URL asset source support\n");
+	fprintf(stderr, "assfile: compiled without URL asset source support\n");
 	return 0;
 }
 
