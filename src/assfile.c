@@ -23,6 +23,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 int ass_errno;
 
+/* declared in assfile_impl.h */
+int ass_mod_url_max_threads;
+char ass_mod_url_cachedir[512];
+int ass_verbose;
+
 static int add_fop(const char *prefix, int type, struct ass_fileops *fop);
 static const char *match_prefix(const char *str, const char *prefix);
 static void upd_verbose_flag(void);

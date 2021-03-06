@@ -50,9 +50,9 @@ void ass_free_archive(struct ass_fileops *fop);
 struct ass_fileops *ass_alloc_url(const char *url);
 void ass_free_url(struct ass_fileops *fop);
 
-int ass_mod_url_max_threads;
-char ass_mod_url_cachedir[512];
+extern int ass_mod_url_max_threads;
+extern char ass_mod_url_cachedir[512];
 
-int ass_verbose;
+extern int ass_verbose;
 
 #endif	/* ASSFILE_IMPL_H_ */
