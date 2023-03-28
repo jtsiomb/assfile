@@ -20,13 +20,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <string.h>
 #include <errno.h>
 #include "assfile_impl.h"
-#include "tpool.h"
-#include "md4.h"
 
 #ifdef BUILD_MOD_URL
 #include <pthread.h>
 #include <curl/curl.h>
 #include <sys/stat.h>
+#include "tpool.h"
+#include "md4.h"
 
 enum {
 	DL_UNKNOWN,
